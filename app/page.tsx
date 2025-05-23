@@ -1,12 +1,14 @@
 "use client";
 
+import Image from "next/image";
+
 export default function Home() {
   return (
     <main className="min-h-screen bg-surface text-dark font-sans">
       {/* Hero Fullscreen Section */}
       <section className="relative h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary to-primaryLight text-white text-center px-6">
         <div className="absolute top-4 left-4 text-2xl font-bold tracking-tight">
-          EmprestaAí
+          EmprestaAi
         </div>
         <div className="z-10">
           <h1 className="text-5xl md:text-6xl font-extrabold mb-6 max-w-3xl leading-tight">
@@ -17,7 +19,7 @@ export default function Home() {
             clique.
           </p>
           <a
-            href="/login"
+            href="pages/login-register"
             className="inline-block bg-white text-primary px-8 py-4 font-bold rounded-full text-lg shadow-lg hover:bg-primaryLight hover:text-white transition"
           >
             Começar agora
@@ -69,7 +71,7 @@ export default function Home() {
           Com o EmprestaAí, você nunca mais esquece quem ficou com o quê.
         </p>
         <a
-          href="/login"
+          href="/pages/login-register"
           className="inline-block bg-white text-primary px-6 py-3 font-semibold rounded-full text-lg shadow hover:bg-primaryLight hover:text-white transition"
         >
           Começar agora
