@@ -1,5 +1,4 @@
 "use client";
-
 import Image from "next/image";
 import { useState } from "react";
 
@@ -8,6 +7,7 @@ interface Item {
   pessoa: string;
   data: string;
   devolucao: string | null;
+  status?: "pendente" | "aceito" | "recusado";
 }
 
 type Filtro = "todos" | "no-prazo" | "atrasado" | "sem-data";
@@ -15,14 +15,7 @@ type Filtro = "todos" | "no-prazo" | "atrasado" | "sem-data";
 export default function Dashboard() {
   const [filter, setFilter] = useState<Filtro>("todos");
   const [showModal, setShowModal] = useState(false);
-  const [novoEmprestimo, setNovoEmprestimo] = useState({
-    nome: "",
-    email: "",
-    dataEmprestimo: new Date().toISOString().split("T")[0],
-    dataDevolucao: "",
-  });
-
-  const emprestimos: Item[] = [
+  const [emprestimos, setEmprestimos] = useState<Item[]>([
     {
       nome: "Livro: Código Limpo",
       pessoa: "Ana",
@@ -35,22 +28,31 @@ export default function Dashboard() {
       data: "2025-05-12",
       devolucao: null,
     },
-  ];
+  ]);
 
-  const recebidos: Item[] = [
+  const [novoEmprestimo, setNovoEmprestimo] = useState({
+    nome: "",
+    email: "",
+    dataEmprestimo: new Date().toISOString().split("T")[0],
+    dataDevolucao: "",
+  });
+
+  const [recebidos, setRecebidos] = useState<Item[]>([
     {
       nome: "Guarda-chuva grande",
       pessoa: "Carlos",
       data: "2025-05-03",
       devolucao: "2025-05-20",
+      status: "pendente",
     },
     {
       nome: "Projetor Epson",
       pessoa: "Julia",
       data: "2025-04-28",
       devolucao: "2025-05-10",
+      status: "aceito",
     },
-  ];
+  ]);
 
   const hoje = new Date();
 
@@ -63,6 +65,45 @@ export default function Dashboard() {
       if (filter === "no-prazo") return dataDevolucao >= hoje;
       return true;
     });
+  }
+
+  function handleSalvar(e: React.FormEvent) {
+    e.preventDefault();
+    if (
+      !novoEmprestimo.nome ||
+      !novoEmprestimo.email ||
+      !novoEmprestimo.dataEmprestimo
+    ) {
+      alert("Preencha todos os campos obrigatórios");
+      return;
+    }
+
+    const novoItem: Item = {
+      nome: novoEmprestimo.nome,
+      pessoa: novoEmprestimo.email,
+      data: novoEmprestimo.dataEmprestimo,
+      devolucao: novoEmprestimo.dataDevolucao || null,
+      status: "pendente",
+    };
+
+    setEmprestimos((prev) => [...prev, novoItem]);
+    setShowModal(false);
+    setNovoEmprestimo({
+      nome: "",
+      email: "",
+      dataEmprestimo: new Date().toISOString().split("T")[0],
+      dataDevolucao: "",
+    });
+  }
+
+  function confirmarRecebimento(
+    item: Item,
+    status: "pendente" | "aceito" | "recusado"
+  ) {
+    const atualizados = recebidos.map((i) =>
+      i === item ? { ...i, status } : i
+    );
+    setRecebidos(atualizados);
   }
 
   return (
@@ -117,6 +158,9 @@ export default function Dashboard() {
                 <p className="text-sm text-muted">
                   Devolver até: {item.devolucao || "---"}
                 </p>
+                <p className="text-sm text-muted">
+                  Status: {item.status || "pendente"}
+                </p>
               </div>
             ))}
           </div>
@@ -138,6 +182,36 @@ export default function Dashboard() {
                 <p className="text-sm text-muted">
                   Devolver até: {item.devolucao || "---"}
                 </p>
+                {item.status === "pendente" ? (
+                  <div className="flex gap-2 mt-2 items-center justify-center">
+                    <button
+                      onClick={() => confirmarRecebimento(item, "aceito")}
+                      className="bg-green-600 hover:bg-green-700 duration-200 text-white px-4 py-1 rounded"
+                    >
+                      Aceitar
+                    </button>
+                    <button
+                      onClick={() => confirmarRecebimento(item, "recusado")}
+                      className="bg-red-600 hover:bg-red-700 duration-200 text-white px-4 py-1 rounded"
+                    >
+                      Recusar
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2 mt-2">
+                    <span className="text-sm text-muted">
+                      Status: {item.status}
+                    </span>
+                    <div className="flex items-center justify-center">
+                      <button
+                        onClick={() => confirmarRecebimento(item, "pendente")}
+                        className="text-md text-white hover:bg-primary duration-200 bg-primaryLight w-48 h-10 px-2 rounded-md"
+                      >
+                        Reverter para pendente
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -156,11 +230,11 @@ export default function Dashboard() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-2xl shadow-xl max-w-md w-full">
+          <div className="bg-white p-6 mx-3 rounded-2xl shadow-xl max-w-md w-full">
             <h3 className="text-xl font-bold mb-4 text-primary">
               Novo Empréstimo
             </h3>
-            <form className="flex flex-col gap-4">
+            <form className="flex flex-col gap-4" onSubmit={handleSalvar}>
               <input
                 type="text"
                 placeholder="Nome do item"
@@ -182,28 +256,36 @@ export default function Dashboard() {
                 }
                 className="w-full px-4 py-2 border border-muted rounded-xl"
               />
-              <input
-                type="date"
-                value={novoEmprestimo.dataEmprestimo}
-                onChange={(e) =>
-                  setNovoEmprestimo({
-                    ...novoEmprestimo,
-                    dataEmprestimo: e.target.value,
-                  })
-                }
-                className="w-full px-4 py-2 border border-muted rounded-xl"
-              />
-              <input
-                type="date"
-                value={novoEmprestimo.dataDevolucao}
-                onChange={(e) =>
-                  setNovoEmprestimo({
-                    ...novoEmprestimo,
-                    dataDevolucao: e.target.value,
-                  })
-                }
-                className="w-full px-4 py-2 border border-muted rounded-xl"
-              />
+              <div>
+                <h2>Início do empréstimo</h2>
+                <input
+                  type="date"
+                  value={novoEmprestimo.dataEmprestimo}
+                  min={new Date().toISOString().split("T")[0]}
+                  onChange={(e) =>
+                    setNovoEmprestimo({
+                      ...novoEmprestimo,
+                      dataEmprestimo: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-2 border border-muted rounded-xl"
+                />
+              </div>
+              <div>
+                <h2>Data de devolução</h2>
+                <input
+                  type="date"
+                  value={novoEmprestimo.dataDevolucao}
+                  min={new Date().toISOString().split("T")[0]}
+                  onChange={(e) =>
+                    setNovoEmprestimo({
+                      ...novoEmprestimo,
+                      dataDevolucao: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-2 border border-muted rounded-xl"
+                />
+              </div>
               <div className="flex justify-end gap-2 mt-4">
                 <button
                   type="button"
