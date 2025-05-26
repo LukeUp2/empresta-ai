@@ -3,7 +3,7 @@ import { useState } from "react";
 import Image from "next/image";
 
 export default function Login() {
-  const [isRegister, setIsRegister] = useState(false);
+  const [isRegister, setIsRegister] = useState(true);
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-primary to-primaryLight flex items-center justify-center px-4">
